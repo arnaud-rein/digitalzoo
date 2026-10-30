@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Zoo — Team Squadeasy</title>
+  <meta name="description" content="Digital Zoo : 10 animaux, 100 entreprises, un seul objectif. Marche, course et vélo sur Squadeasy." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='%23fff' font-family='Arial Black,Arial' font-weight='900'>DZ</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== NAVIGATION ===== -->
+  <header class="nav" id="nav">
+    <a href="#accueil" class="nav__logo" aria-label="Retour en haut">DIGITAL<span>ZOO</span></a>
+    <button class="nav__burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav__menu" id="menu">
+      <a href="#accueil">Accueil</a>
+      <a href="#video">Vidéo</a>
+      <a href="#meute">La meute</a>
+      <a href="#classement">Classement</a>
+      <a href="#galerie">Galerie</a>
+      <a href="#contact" class="nav__cta">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="accueil">
+      <img class="hero__img" id="hero-img" src="" alt="Équipe Digital Zoo" />
+      <div class="hero__overlay"></div>
+      <div class="hero__content">
+        <p class="eyebrow">Challenge Squadeasy</p>
+        <h1 class="hero__title" id="hero-title">DIGITAL ZOO</h1>
+        <p class="hero__subtitle" id="hero-subtitle"></p>
+        <div class="hero__actions">
+          <a href="#classement" class="btn btn--light">Voir le classement</a>
+          <a href="#meute" class="btn btn--ghost">Rencontrer la meute</a>
+        </div>
+      </div>
+      <a href="#chiffres" class="hero__scroll" aria-label="Défiler">↓</a>
+    </section>
+
+    <!-- ===== BANDEAU DÉFILANT ===== -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track">
+        <span>MARCHE</span><span>●</span><span>COURSE</span><span>●</span><span>VÉLO</span><span>●</span><span>ZÉRO EXCUSE</span><span>●</span>
+        <span>MARCHE</span><span>●</span><span>COURSE</span><span>●</span><span>VÉLO</span><span>●</span><span>ZÉRO EXCUSE</span><span>●</span>
+      </div>
+    </div>
+
+    <!-- ===== CHIFFRES ===== -->
+    <section class="stats" id="chiffres">
+      <div class="stat"><span class="stat__num">10</span><span class="stat__label">Animaux</span></div>
+      <div class="stat"><span class="stat__num">100</span><span class="stat__label">Entreprises</span></div>
+      <div class="stat"><span class="stat__num">3</span><span class="stat__label">Disciplines</span></div>
+      <div class="stat"><span class="stat__num">1</span><span class="stat__label">Objectif : gagner</span></div>
+    </section>
+
+    <!-- ===== VIDÉO ===== -->
+    <section class="section section--dark" id="video">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">01 — Vidéo</p>
+          <h2 class="section__title" id="video-title">La meute en action</h2>
+        </div>
+        <div class="video" id="video-wrapper"></div>
+      </div>
+    </section>
+
+    <!-- ===== LA MEUTE ===== -->
+    <section class="section" id="meute">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">02 — La meute</p>
+          <h2 class="section__title">10 animaux totems</h2>
+          <p class="section__lead">Chacun son animal, chacun son rythme. Ensemble, on chasse en meute.</p>
+        </div>
+        <div class="team" id="team"></div>
+      </div>
+    </section>
+
+    <!-- ===== CLASSEMENT ===== -->
+    <section class="section section--dark" id="classement">
+      <div class="container">
+        <div class="section__head section__head--row">
+          <div>
+            <p class="eyebrow">03 — Classement</p>
+            <h2 class="section__title">Scores de l'équipe</h2>
+          </div>
+          <div class="board__meta">
+            <span class="board__status" id="board-status">Chargement…</span>
+            <button class="btn btn--small btn--light" id="board-refresh" type="button">↻ Actualiser</button>
+          </div>
+        </div>
+
+        <div class="board__summary" id="board-summary"></div>
+
+        <div class="table-wrap">
+          <table class="board" id="board">
+            <thead>
+              <tr>
+                <th class="col-rank" scope="col">#</th>
+                <th scope="col" data-sort="name">Nom</th>
+                <th class="col-num" scope="col" data-sort="score">Score</th>
+                <th class="col-num" scope="col" data-sort="shame">Nombre de shames</th>
+              </tr>
+            </thead>
+            <tbody id="board-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== GALERIE ===== -->
+    <section class="section" id="galerie">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">04 — Galerie</p>
+          <h2 class="section__title">Dans la jungle</h2>
+        </div>
+        <div class="gallery" id="gallery"></div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT ===== -->
+    <section class="section section--dark" id="contact">
+      <div class="container contact">
+        <div class="contact__intro">
+          <p class="eyebrow">05 — Contact</p>
+          <h2 class="section__title">Un message pour la meute ?</h2>
+          <p class="section__lead">Défi, encouragements, provocation amicale d'une autre équipe… on lit tout.</p>
+        </div>
+        <form class="form" id="contact-form" novalidate>
+          <div class="form__row">
+            <label class="field">
+              <span>Nom</span>
+              <input type="text" name="from_name" required autocomplete="name" />
+            </label>
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="reply_to" required autocomplete="email" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Sujet</span>
+            <input type="text" name="subject" required />
+          </label>
+          <label class="field">
+            <span>Message</span>
+            <textarea name="message" rows="5" required></textarea>
+          </label>
+          <button class="btn btn--light btn--block" type="submit" id="contact-submit">Envoyer</button>
+          <p class="form__feedback" id="contact-feedback" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span class="nav__logo">DIGITAL<span>ZOO</span></span>
+      <div class="footer__links" id="footer-links"></div>
+      <span class="footer__copy">© <span id="year"></span> Digital Zoo — Team Squadeasy</span>
+    </div>
+  </footer>
+
+  <!-- ===== LIGHTBOX ===== -->
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lightbox__btn lightbox__close" id="lb-close" aria-label="Fermer">✕</button>
+    <button class="lightbox__btn lightbox__prev" id="lb-prev" aria-label="Précédente">←</button>
+    <figure class="lightbox__figure">
+      <img id="lb-img" src="" alt="" />
+      <figcaption id="lb-caption"></figcaption>
+    </figure>
+    <button class="lightbox__btn lightbox__next" id="lb-next" aria-label="Suivante">→</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
