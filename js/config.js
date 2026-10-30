@@ -34,15 +34,15 @@ const CONFIG = {
      "name" doit être écrit EXACTEMENT comme dans ton Google Sheet
      pour que la photo s'affiche aussi dans le classement.           */
   members: [
-    { name: "Membre 1",  animal: "Lion",      image: "https://picsum.photos/seed/lion/600/600" },
-    { name: "Membre 2",  animal: "Loup",      image: "https://picsum.photos/seed/wolf/600/600" },
-    { name: "Membre 3",  animal: "Guépard",   image: "https://picsum.photos/seed/cheetah/600/600" },
-    { name: "Membre 4",  animal: "Ours",      image: "https://picsum.photos/seed/bear/600/600" },
-    { name: "Membre 5",  animal: "Aigle",     image: "https://picsum.photos/seed/eagle/600/600" },
-    { name: "Membre 6",  animal: "Renard",    image: "https://picsum.photos/seed/fox/600/600" },
-    { name: "Membre 7",  animal: "Panda",     image: "https://picsum.photos/seed/panda/600/600" },
-    { name: "Membre 8",  animal: "Zèbre",     image: "https://picsum.photos/seed/zebra/600/600" },
-    { name: "Membre 9",  animal: "Gorille",   image: "https://picsum.photos/seed/gorilla/600/600" },
+    { name: "Membre 1", animal: "Lion", image: "https://picsum.photos/seed/lion/600/600" },
+    { name: "Membre 2", animal: "Loup", image: "https://picsum.photos/seed/wolf/600/600" },
+    { name: "Membre 3", animal: "Guépard", image: "https://picsum.photos/seed/cheetah/600/600" },
+    { name: "Membre 4", animal: "Ours", image: "https://picsum.photos/seed/bear/600/600" },
+    { name: "Membre 5", animal: "Aigle", image: "https://picsum.photos/seed/eagle/600/600" },
+    { name: "Membre 6", animal: "Renard", image: "https://picsum.photos/seed/fox/600/600" },
+    { name: "Membre 7", animal: "Panda", image: "https://picsum.photos/seed/panda/600/600" },
+    { name: "Membre 8", animal: "Zèbre", image: "https://picsum.photos/seed/zebra/600/600" },
+    { name: "Membre 9", animal: "Gorille", image: "https://picsum.photos/seed/gorilla/600/600" },
     { name: "Membre 10", animal: "Paresseux", image: "https://picsum.photos/seed/sloth/600/600" },
   ],
 
@@ -52,7 +52,7 @@ const CONFIG = {
      3. Ligne 1 du sheet = en-têtes : Nom | Score | Shame
      Tant que sheetId est vide, des données de démo sont affichées.          */
   scoreboard: {
-    sheetId: "",
+    sheetId: "1RisYZycIcMY6wfWXNDUfvoDZXcLnddhgvkBu0HbWVsU",
     sheetName: "Feuille 1",   // nom de l'onglet (ex. "Feuille 1" ou "Sheet1")
     refreshMinutes: 5,        // rafraîchissement auto (0 = désactivé)
     scoreUnit: "pts",
