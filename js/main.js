@@ -186,8 +186,8 @@
     ]);
 
     summary.append(
-      card("Total de la meute", `${fmt(total)} ${unit}`.trim(), `${rows.length} membres`),
-      card("Chef de meute", leader.name, `${fmt(leader.score)} ${unit}`.trim()),
+      card("Total du ZOO", `${fmt(total)} ${unit}`.trim(), `${rows.length} membres`),
+      card("Capitaine du ZOO", leader.name, `${fmt(leader.score)} ${unit}`.trim()),
       card("Roi de la honte", shameKing.shame > 0 ? shameKing.name : "Personne 🙏", shameKing.shame > 0 ? `${fmt(shameKing.shame)} shame${shameKing.shame > 1 ? "s" : ""}` : "Aucun shame pour l'instant"),
     );
   }

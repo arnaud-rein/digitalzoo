@@ -14,7 +14,7 @@ const CONFIG = {
 
   /* ---------- Grande image d'accueil ---------- */
   hero: {
-    image: "https://picsum.photos/seed/digitalzoo-hero/1920/1080",
+    image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793454135/Escouade_animale_sous_l_orage_toxique_zjpnxp.webp",
     title: "DIGITAL ZOO",
     subtitle: "On marche, on court, on pédale. Et on ne lâche rien.",
   },
@@ -27,23 +27,23 @@ const CONFIG = {
   video: {
     src: "https://res.cloudinary.com/demo/video/upload/dog.mp4",
     poster: "https://picsum.photos/seed/digitalzoo-video/1280/720",
-    title: "La meute en action",
+    title: "Le ZOO en action",
   },
 
   /* ---------- Membres (animal totem) ----------
      "name" doit être écrit EXACTEMENT comme dans ton Google Sheet
      pour que la photo s'affiche aussi dans le classement.           */
   members: [
-    { name: "Membre 1", animal: "Lion", image: "https://picsum.photos/seed/lion/600/600" },
-    { name: "Membre 2", animal: "Loup", image: "https://picsum.photos/seed/wolf/600/600" },
-    { name: "Membre 3", animal: "Guépard", image: "https://picsum.photos/seed/cheetah/600/600" },
-    { name: "Membre 4", animal: "Ours", image: "https://picsum.photos/seed/bear/600/600" },
-    { name: "Membre 5", animal: "Aigle", image: "https://picsum.photos/seed/eagle/600/600" },
-    { name: "Membre 6", animal: "Renard", image: "https://picsum.photos/seed/fox/600/600" },
-    { name: "Membre 7", animal: "Panda", image: "https://picsum.photos/seed/panda/600/600" },
-    { name: "Membre 8", animal: "Zèbre", image: "https://picsum.photos/seed/zebra/600/600" },
-    { name: "Membre 9", animal: "Gorille", image: "https://picsum.photos/seed/gorilla/600/600" },
-    { name: "Membre 10", animal: "Paresseux", image: "https://picsum.photos/seed/sloth/600/600" },
+    { name: "Membre 1", animal: "LeGrandZebre", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Z%C3%A8bre_laser_%C3%A0_la_Citadelle_de_Lille_yyyy1z.webp" },
+    { name: "Membre 2", animal: "Anisse", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_noir_au_sourire_malicieux_s7mhf1.webp" },
+    { name: "Membre 3", animal: "Rémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/remi_tigre_iaupe9.webp" },
+    { name: "Membre 4", animal: "Jérémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Portrait_r%C3%A9aliste_d_un_chimpanz%C3%A9_en_int%C3%A9rieur_qcblsn.webp" },
+    { name: "Membre 5", animal: "Nathan", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_aux_yeux_verts_langue_tir%C3%A9e_mzgin0.webp" },
+    { name: "Membre 6", animal: "Valentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_muscl%C3%A9_sur_terrasse_zj1abj.webp" },
+    { name: "Membre 7", animal: "James", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Tigre_anthropomorphe_sur_route_nocturne_sc7sy5.webp" },
+    { name: "Membre 8", animal: "Quentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Axolotl_souriant_dans_son_aquarium_swasq4.webp" },
+    { name: "Membre 9", animal: "Antoine", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/H%C3%A9risson_urbain_dans_la_for%C3%AAt_brumeuse_ky3udy.webp" },
+    { name: "Membre 10", animal: "Max", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/%C3%89toile_de_mer_dodue_sur_fond_marin_fkfcbm.webp" },
   ],
 
   /* ---------- Classement (Google Sheet public) ----------
