@@ -1,0 +1,7 @@
+# Exports bruts Squadeasy (noms complets + codes d’équipe privés) : ne pas publier
+data/raw/
+/data.json
+/20*.json
+
+# Scripts locaux
+/scripts/

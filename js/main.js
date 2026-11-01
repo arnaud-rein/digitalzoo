@@ -100,11 +100,11 @@
     const team = $("#team");
     CONFIG.members.forEach((m, i) => {
       team.append(el("article", { class: "member reveal" }, [
-        el("img", { src: m.image, alt: `${m.name} — ${m.animal}`, loading: "lazy" }),
+        el("img", { src: m.image, alt: m.name ? `${m.name} — ${m.animal}` : m.animal, loading: "lazy" }),
         el("span", { class: "member__num", text: String(i + 1).padStart(2, "0") }),
         el("div", { class: "member__info" }, [
           el("span", { class: "member__animal", text: m.animal }),
-          el("span", { class: "member__name", text: m.name }),
+          m.name ? el("span", { class: "member__name", text: m.name }) : null,
         ]),
       ]));
     });
@@ -301,6 +301,255 @@
     if (CONFIG.scoreboard.sheetId && minutes > 0) setInterval(loadBoard, minutes * 60 * 1000);
   }
 
+  /* ---------- Classement Squadeasy (data/leaderboard.json) ---------- */
+  const ranking = {
+    data: null,
+    tab: "teams",
+    query: "",
+    page: 0,      // page affichée (0 = première)
+    pageSize: 50,
+    open: new Set(), // équipes dépliées
+  };
+
+  const fmtNum = (n) => Number(n).toLocaleString("fr-FR");
+  const fmtDate = (iso, opts) => new Date(iso).toLocaleString("fr-FR", { timeZone: "Europe/Paris", ...opts });
+
+  function renderRankSummary() {
+    const { data, tab } = ranking;
+    const summary = $("#rank-summary");
+    summary.replaceChildren();
+
+    const card = (label, value, sub) => el("div", { class: "summary" }, [
+      el("span", { class: "summary__label", text: label }),
+      el("span", { class: "summary__value", text: value }),
+      sub ? el("span", { class: "summary__sub", text: sub }) : null,
+    ]);
+
+    if (tab === "teams") {
+      const us = data.teams.find((t) => t.isUs);
+      const leader = data.teams[0];
+      summary.append(
+        card("Digital Zoo", us ? `#${us.rank}` : "—", us ? `${fmtNum(us.points)} pts · sur ${data.teams.length} équipes` : "Équipe introuvable"),
+        card("Équipe en tête", leader.name, `${fmtNum(leader.points)} pts`),
+        card("Équipes engagées", fmtNum(data.teams.length), `${fmtNum(data.participants.length)} participants`),
+      );
+    } else {
+      const leader = data.participants[0];
+      const bestOfUs = data.participants.find((p) => p.isUs);
+      summary.append(
+        card("Meilleur du ZOO", bestOfUs ? bestOfUs.name : "—", bestOfUs ? `#${bestOfUs.rank} · ${fmtNum(bestOfUs.points)} pts` : ""),
+        card("Leader général", leader.name, `${leader.team} · ${fmtNum(leader.points)} pts`),
+        card("Participants", fmtNum(data.participants.length), `${fmtNum(data.teams.length)} équipes`),
+      );
+    }
+  }
+
+  const rankCellFor = (row) => {
+    const cell = el("td", {}, el("span", { class: "rank", text: String(row.rank).padStart(2, "0") }));
+    if (row.move) cell.append(el("span", { class: `move move--${row.move > 0 ? "up" : "down"}`, text: String(Math.abs(row.move)) }));
+    return cell;
+  };
+
+  const scoreFor = (points) => {
+    const score = el("span", { class: "score", text: fmtNum(points) });
+    score.append(el("small", { text: "pts" }));
+    return score;
+  };
+
+  const avatarFor = (name) =>
+    el("span", { class: "player__avatar player__avatar--empty", text: [...name][0]?.toUpperCase() || "?" });
+
+  function teamMembers(teamId) {
+    return ranking.data.participants.filter((p) => p.teamId === teamId); // déjà triés par points
+  }
+
+  function memberRows(team) {
+    const members = teamMembers(team.id);
+    if (!members.length) {
+      return [el("tr", { class: "team-member" }, el("td", { colspan: "4", class: "board__empty", text: "Aucun membre." }))];
+    }
+    return members.map((p) => el("tr", { class: "team-member" }, [
+      el("td", {}, el("span", { class: "team-member__rank", title: "Rang individuel", text: `#${p.rank}` })),
+      el("td", {}, el("div", { class: "player" }, [
+        avatarFor(p.name),
+        el("span", { class: "player__name", text: p.name }),
+      ])),
+      el("td", {}),
+      el("td", { class: "col-num" }, scoreFor(p.points)),
+    ]));
+  }
+
+  function toggleTeam(team) {
+    if (ranking.open.has(team.id)) ranking.open.delete(team.id);
+    else ranking.open.add(team.id);
+    renderRankBoard();
+  }
+
+  function renderRankBoard() {
+    const { data, tab } = ranking;
+    const isTeams = tab === "teams";
+    const head = $("#rank-head");
+    const body = $("#rank-body");
+
+    head.replaceChildren(el("tr", {}, [
+      el("th", { class: "col-rank", scope: "col", text: "#" }),
+      el("th", { scope: "col", text: isTeams ? "Équipe" : "Participant" }),
+      isTeams ? el("th", { class: "col-num", scope: "col", text: "Membres" }) : null,
+      el("th", { class: "col-num", scope: "col", text: "Points" }),
+    ]));
+
+    const q = normalize(ranking.query);
+    const all = isTeams ? data.teams : data.participants;
+    const rows = q ? all.filter((r) => normalize(r.name).includes(q) || normalize(r.team).includes(q)) : all;
+    const pageCount = Math.max(1, Math.ceil(rows.length / ranking.pageSize));
+    ranking.page = Math.min(ranking.page, pageCount - 1);
+    const from = ranking.page * ranking.pageSize;
+    const visible = rows.slice(from, from + ranking.pageSize);
+
+    body.replaceChildren();
+    if (!visible.length) {
+      body.append(el("tr", {}, el("td", { class: "board__empty", colspan: isTeams ? "4" : "3", text: "Aucun résultat." })));
+    }
+
+    visible.forEach((row) => {
+      const open = isTeams && ranking.open.has(row.id);
+      const classes = [
+        data.started && row.rank <= 3 && "is-podium",
+        data.started && row.rank === 1 && "is-first",
+        row.isUs && "is-us",
+        isTeams && "is-team",
+        open && "is-open",
+      ].filter(Boolean);
+
+      const nameBlock = el("div", {}, [
+        el("span", { class: "player__name", text: row.name }),
+        row.isUs && isTeams ? el("span", { class: "badge-us", text: "Nous" }) : null,
+        isTeams ? null : el("span", { class: "player__animal", text: row.team }),
+      ]);
+
+      const tr = el("tr", { class: classes.join(" ") }, [
+        rankCellFor(row),
+        el("td", {}, el("div", { class: "player" }, [avatarFor(row.name), nameBlock])),
+        isTeams ? el("td", { class: "col-num" }, [String(row.members), el("span", { class: "team-toggle", "aria-hidden": "true", text: open ? "−" : "+" })]) : null,
+        el("td", { class: "col-num" }, scoreFor(row.points)),
+      ]);
+
+      if (isTeams) {
+        tr.tabIndex = 0;
+        tr.setAttribute("aria-expanded", String(open));
+        tr.setAttribute("aria-label", `${row.name} : ${open ? "masquer" : "voir"} les membres`);
+        tr.addEventListener("click", () => toggleTeam(row));
+        tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTeam(row); } });
+      }
+
+      body.append(tr);
+      if (open) body.append(...memberRows(row));
+    });
+
+    renderPager(rows.length, pageCount, from, visible.length);
+  }
+
+  // Numéros affichés : 1 … 4 5 6 … 18
+  function pageNumbers(current, count) {
+    const keep = new Set([0, count - 1, current - 1, current, current + 1]);
+    const pages = [...keep].filter((p) => p >= 0 && p < count).sort((a, b) => a - b);
+    return pages.flatMap((p, i) => (i > 0 && p - pages[i - 1] > 1 ? ["…", p] : [p]));
+  }
+
+  function goToPage(page) {
+    ranking.page = page;
+    renderRankBoard();
+    $("#rank-board").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function renderPager(total, pageCount, from, shown) {
+    const pager = $("#rank-pager");
+    pager.replaceChildren();
+    pager.hidden = pageCount <= 1;
+    if (pager.hidden) return;
+
+    const btn = (label, page, attrs = {}) => {
+      const b = el("button", { class: "pager__btn", type: "button", ...attrs, text: label });
+      if (page == null) b.disabled = true;
+      else b.addEventListener("click", () => goToPage(page));
+      return b;
+    };
+    const current = ranking.page;
+
+    pager.append(
+      el("span", { class: "pager__info", text: `${fmtNum(from + 1)}–${fmtNum(from + shown)} sur ${fmtNum(total)}` }),
+      el("div", { class: "pager__pages" }, [
+        btn("←", current > 0 ? current - 1 : null, { "aria-label": "Page précédente" }),
+        ...pageNumbers(current, pageCount).map((p) => p === "…"
+          ? el("span", { class: "pager__gap", text: "…" })
+          : btn(String(p + 1), p === current ? null : p, p === current ? { class: "pager__btn is-current", "aria-current": "page" } : { "aria-label": `Page ${p + 1}` })),
+        btn("→", current < pageCount - 1 ? current + 1 : null, { "aria-label": "Page suivante" }),
+      ]),
+    );
+  }
+
+  function renderRanking() {
+    if (!ranking.data) return;
+    renderRankSummary();
+    renderRankBoard();
+  }
+
+  async function loadRanking() {
+    const status = $("#rank-status");
+    const notice = $("#rank-notice");
+    try {
+      const res = await fetch(`${CONFIG.ranking.file}?_=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      ranking.data = await res.json();
+    } catch (err) {
+      console.error("[Digital Zoo] Classement :", err);
+      status.textContent = "Classement indisponible pour le moment";
+      status.classList.add("is-error");
+      return;
+    }
+
+    const { data } = ranking;
+    status.textContent = `Données du ${fmtDate(data.updatedAt, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })} · mis à jour 1×/jour`;
+    $("#stat-teams").textContent = fmtNum(data.teams.length);
+
+    if (!data.started) {
+      const start = data.season.start
+        ? fmtDate(data.season.start, { weekday: "long", day: "numeric", month: "long" })
+        : "bientôt";
+      notice.replaceChildren(
+        el("strong", { text: `Le défi commence le ${start}` }),
+        document.createTextNode("Aucun point pour l'instant : le classement se remplira dès les premières activités."),
+      );
+      notice.hidden = false;
+    }
+    renderRanking();
+  }
+
+  function initRanking() {
+    ranking.pageSize = Number(CONFIG.ranking.pageSize) || 50;
+
+    document.querySelectorAll(".tabs__btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        ranking.tab = btn.dataset.tab;
+        ranking.page = 0;
+        document.querySelectorAll(".tabs__btn").forEach((b) => {
+          const active = b === btn;
+          b.classList.toggle("is-active", active);
+          b.setAttribute("aria-selected", String(active));
+        });
+        renderRanking();
+      });
+    });
+
+    $("#rank-search").addEventListener("input", (e) => {
+      ranking.query = e.target.value;
+      ranking.page = 0;
+      renderRanking();
+    });
+
+    loadRanking();
+  }
+
   /* ---------- Galerie + lightbox ---------- */
   function initGallery() {
     const gallery = $("#gallery");
@@ -376,7 +625,7 @@
       e.preventDefault();
 
       let valid = true;
-      form.querySelectorAll("input, textarea").forEach((field) => {
+      form.querySelectorAll(".field input, .field textarea").forEach((field) => {
         const ok = field.checkValidity() && field.value.trim() !== "";
         field.closest(".field").classList.toggle("is-invalid", !ok);
         if (!ok) valid = false;
@@ -391,6 +640,7 @@
         return;
       }
 
+      form.elements.time.value = new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "full", timeStyle: "short" });
       submit.disabled = true;
       submit.textContent = "Envoi…";
       feedback.textContent = "";
@@ -422,7 +672,7 @@
 
   /* ---------- Apparition au scroll ---------- */
   function initReveal() {
-    document.querySelectorAll(".section__head, .video, .table-wrap, .board__summary, .form").forEach((n) => n.classList.add("reveal"));
+    document.querySelectorAll(".section__head, .video, .table-wrap, .board__summary, .tabs, .form").forEach((n) => n.classList.add("reveal"));
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -439,6 +689,7 @@
     initHero();
     initVideo();
     initTeam();
+    initRanking();
     initBoard();
     initGallery();
     initContact();

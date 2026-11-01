@@ -29,6 +29,7 @@
       <a href="#video">Vidéo</a>
       <a href="#zoo">Le ZOO</a>
       <a href="#classement">Classement</a>
+      <a href="#scores">Scores</a>
       <a href="#galerie">Galerie</a>
       <a href="#contact" class="nav__cta">Contact</a>
     </nav>
@@ -64,7 +65,7 @@
     <!-- ===== CHIFFRES ===== -->
     <section class="stats" id="chiffres">
       <div class="stat"><span class="stat__num">10</span><span class="stat__label">Animaux</span></div>
-      <div class="stat"><span class="stat__num">181</span><span class="stat__label">Entreprises</span></div>
+      <div class="stat"><span class="stat__num" id="stat-teams">182</span><span class="stat__label">Équipes</span></div>
       <div class="stat"><span class="stat__num">3</span><span class="stat__label">Disciplines</span></div>
       <div class="stat"><span class="stat__num">1</span><span class="stat__label">Objectif : gagner</span></div>
     </section>
@@ -92,12 +93,47 @@
       </div>
     </section>
 
-    <!-- ===== CLASSEMENT ===== -->
+    <!-- ===== CLASSEMENT SQUADEASY ===== -->
     <section class="section section--dark" id="classement">
       <div class="container">
         <div class="section__head section__head--row">
           <div>
             <p class="eyebrow">03 — Classement</p>
+            <h2 class="section__title">Le défi Squadeasy</h2>
+          </div>
+          <div class="board__meta">
+            <span class="board__status" id="rank-status">Chargement…</span>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Type de classement">
+          <button class="tabs__btn is-active" type="button" role="tab" aria-selected="true" data-tab="teams">Équipes</button>
+          <button class="tabs__btn" type="button" role="tab" aria-selected="false" data-tab="participants">Participants</button>
+        </div>
+
+        <div class="rank-notice" id="rank-notice" hidden></div>
+        <div class="board__summary" id="rank-summary"></div>
+
+        <div class="rank-tools">
+          <input class="rank-search" id="rank-search" type="search" placeholder="Rechercher…" aria-label="Rechercher dans le classement" />
+        </div>
+
+        <div class="table-wrap">
+          <table class="board" id="rank-board">
+            <thead id="rank-head"></thead>
+            <tbody id="rank-body"></tbody>
+          </table>
+        </div>
+        <nav class="pager" id="rank-pager" aria-label="Pagination du classement" hidden></nav>
+      </div>
+    </section>
+
+    <!-- ===== SCORES DU ZOO ===== -->
+    <section class="section section--dark section--joined" id="scores">
+      <div class="container">
+        <div class="section__head section__head--row">
+          <div>
+            <p class="eyebrow">04 — Scores</p>
             <h2 class="section__title">Scores de l'équipe</h2>
           </div>
           <div class="board__meta">
@@ -128,7 +164,7 @@
     <section class="section" id="galerie">
       <div class="container">
         <div class="section__head">
-          <p class="eyebrow">04 — Galerie</p>
+          <p class="eyebrow">05 — Galerie</p>
           <h2 class="section__title">Dans le ZOO</h2>
         </div>
         <div class="gallery" id="gallery"></div>
@@ -139,7 +175,7 @@
     <section class="section section--dark" id="contact">
       <div class="container contact">
         <div class="contact__intro">
-          <p class="eyebrow">05 — Contact</p>
+          <p class="eyebrow">06 — Contact</p>
           <h2 class="section__title">Un message pour le zoo ?</h2>
           <p class="section__lead">Défi, encouragements, provocation amicale d'une autre équipe… on lit tout.</p>
         </div>
@@ -147,11 +183,11 @@
           <div class="form__row">
             <label class="field">
               <span>Nom</span>
-              <input type="text" name="from_name" required autocomplete="name" />
+              <input type="text" name="name" required autocomplete="name" />
             </label>
             <label class="field">
               <span>Email</span>
-              <input type="email" name="reply_to" required autocomplete="email" />
+              <input type="email" name="email" required autocomplete="email" />
             </label>
           </div>
           <label class="field">
@@ -162,6 +198,7 @@
             <span>Message</span>
             <textarea name="message" rows="5" required></textarea>
           </label>
+          <input type="hidden" name="time" />
           <button class="btn btn--light btn--block" type="submit" id="contact-submit">Envoyer</button>
           <p class="form__feedback" id="contact-feedback" role="status" aria-live="polite"></p>
         </form>

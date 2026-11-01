@@ -14,7 +14,7 @@ const CONFIG = {
 
   /* ---------- Grande image d'accueil ---------- */
   hero: {
-    image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793454135/Escouade_animale_sous_l_orage_toxique_zjpnxp.webp",
+    image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793539127/zoo_laser_end_ttr9u1.webp",
     title: "DIGITAL ZOO",
     subtitle: "On marche, on court, on pédale. Et on ne lâche rien.",
   },
@@ -25,7 +25,7 @@ const CONFIG = {
      - un lien Vimeo    (https://vimeo.com/123456)
      - un fichier vidéo (.mp4 / .webm, ex. Cloudinary)                         */
   video: {
-    src: "https://res.cloudinary.com/demo/video/upload/dog.mp4",
+    src: "https://youtu.be/oxdMK45VmaI",
     poster: "https://picsum.photos/seed/digitalzoo-video/1280/720",
     title: "Le ZOO en action",
   },
@@ -34,16 +34,16 @@ const CONFIG = {
      "name" doit être écrit EXACTEMENT comme dans ton Google Sheet
      pour que la photo s'affiche aussi dans le classement.           */
   members: [
-    { name: "Membre 1", animal: "LeGrandZebre", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Z%C3%A8bre_laser_%C3%A0_la_Citadelle_de_Lille_yyyy1z.webp" },
-    { name: "Membre 2", animal: "Anisse", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_noir_au_sourire_malicieux_s7mhf1.webp" },
-    { name: "Membre 3", animal: "Rémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/remi_tigre_iaupe9.webp" },
-    { name: "Membre 4", animal: "Jérémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Portrait_r%C3%A9aliste_d_un_chimpanz%C3%A9_en_int%C3%A9rieur_qcblsn.webp" },
-    { name: "Membre 5", animal: "Nathan", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_aux_yeux_verts_langue_tir%C3%A9e_mzgin0.webp" },
-    { name: "Membre 6", animal: "Valentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_muscl%C3%A9_sur_terrasse_zj1abj.webp" },
-    { name: "Membre 7", animal: "James", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Tigre_anthropomorphe_sur_route_nocturne_sc7sy5.webp" },
-    { name: "Membre 8", animal: "Quentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Axolotl_souriant_dans_son_aquarium_swasq4.webp" },
-    { name: "Membre 9", animal: "Antoine", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/H%C3%A9risson_urbain_dans_la_for%C3%AAt_brumeuse_ky3udy.webp" },
-    { name: "Membre 10", animal: "Max", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/%C3%89toile_de_mer_dodue_sur_fond_marin_fkfcbm.webp" },
+    { name: "", animal: "LeGrandZebre", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Z%C3%A8bre_laser_%C3%A0_la_Citadelle_de_Lille_yyyy1z.webp" },
+    { name: "", animal: "Anisse", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_noir_au_sourire_malicieux_s7mhf1.webp" },
+    { name: "", animal: "Rémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/remi_tigre_iaupe9.webp" },
+    { name: "", animal: "Jérémy", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Portrait_r%C3%A9aliste_d_un_chimpanz%C3%A9_en_int%C3%A9rieur_qcblsn.webp" },
+    { name: "", animal: "Nathan", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_aux_yeux_verts_langue_tir%C3%A9e_mzgin0.webp" },
+    { name: "", animal: "Valentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_tigr%C3%A9_muscl%C3%A9_sur_terrasse_zj1abj.webp" },
+    { name: "", animal: "James", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Tigre_anthropomorphe_sur_route_nocturne_sc7sy5.webp" },
+    { name: "", animal: "Quentin", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Axolotl_souriant_dans_son_aquarium_swasq4.webp" },
+    { name: "", animal: "Dimos", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793537046/ours_bresson_jzjfmk.webp" },
+    { name: "", animal: "Max", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793537274/maxime_derveaux_ddog_hij2kg.webp" },
   ],
 
   /* ---------- Classement (Google Sheet public) ----------
@@ -58,18 +58,26 @@ const CONFIG = {
     scoreUnit: "pts",
   },
 
+  /* ---------- Classement Squadeasy ----------
+     Fichier généré par : node scripts/build-leaderboard.mjs          */
+  ranking: {
+    file: "data/leaderboard.json",
+    pageSize: 10,             // lignes par page
+  },
+
   /* ---------- Galerie ----------
      Ajoute / supprime une ligne pour ajouter / enlever une photo.
      "caption" est optionnel.                                         */
   gallery: [
-    { src: "https://picsum.photos/seed/zoo-1/1200/800", caption: "Sortie du lundi" },
-    { src: "https://picsum.photos/seed/zoo-2/800/1200", caption: "Le loup en côte" },
-    { src: "https://picsum.photos/seed/zoo-3/1200/800", caption: "" },
-    { src: "https://picsum.photos/seed/zoo-4/1200/1200", caption: "Pause ravito" },
-    { src: "https://picsum.photos/seed/zoo-5/1200/800", caption: "" },
-    { src: "https://picsum.photos/seed/zoo-6/800/1200", caption: "Vélotaf sous la pluie" },
-    { src: "https://picsum.photos/seed/zoo-7/1200/800", caption: "" },
-    { src: "https://picsum.photos/seed/zoo-8/1200/800", caption: "Photo d'équipe" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563683/Charge_h%C3%A9ro%C3%AFque_dans_la_for%C3%AAt_en_flammes_kadfm0.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563682/Tigre_%C3%A9lectrique_dans_l_apocalypse_sauvage_crhuil.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563680/Axolotl_n%C3%A9on_au_c%C5%93ur_de_la_temp%C3%AAte_yjt4ek.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563679/Ru%C3%A9e_n%C3%A9on_des_pr%C3%A9dateurs_sauvages_yjxu4a.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563678/Chien_tactique_dans_la_for%C3%AAt_en_flammes_evolcs.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563676/Le_lion_tactique_franchit_le_gouffre_en_flammes_vyvqyx.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563674/La_charge_du_zoo_num%C3%A9rique_ljwauy.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563673/Route_n%C3%A9on_dans_la_for%C3%AAt_orageuse_thjb6g.webp", caption: "" },
+    { src: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563672/lasers_sol_m9vlme.webp", caption: "" },
   ],
 
   /* ---------- Formulaire de contact (EmailJS) ----------
@@ -77,11 +85,11 @@ const CONFIG = {
      - publicKey  : Account > General > Public Key
      - serviceId  : Email Services
      - templateId : Email Templates
-     Variables à utiliser dans ton template : {{from_name}}, {{reply_to}}, {{subject}}, {{message}} */
+     Variables envoyées au template : {{name}}, {{email}}, {{subject}}, {{message}}, {{time}} */
   emailjs: {
-    publicKey: "",
-    serviceId: "",
-    templateId: "",
+    publicKey: "T8tUkXObPsZp_txln",            // À REMPLIR : Account > General > Public Key
+    serviceId: "service_kop10jb",
+    templateId: "template_j800b2a",
   },
 
   /* ---------- Réseaux / liens (laisser "" pour masquer) ---------- */
