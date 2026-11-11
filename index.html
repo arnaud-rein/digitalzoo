@@ -29,7 +29,6 @@
       <a href="#video">Vidéo</a>
       <a href="#zoo">Le ZOO</a>
       <a href="#classement">Classement</a>
-      <a href="#scores">Scores</a>
       <a href="#galerie">Galerie</a>
       <a href="#contact" class="nav__cta">Contact</a>
     </nav>
@@ -103,6 +102,7 @@
           </div>
           <div class="board__meta">
             <span class="board__status" id="rank-status">Chargement…</span>
+            <button class="btn btn--small btn--light live-open" type="button" data-live-open><span class="live-dot"></span>Analyse en direct</button>
           </div>
         </div>
 
@@ -111,7 +111,6 @@
           <button class="tabs__btn" type="button" role="tab" aria-selected="false" data-tab="participants">Participants</button>
         </div>
 
-        <div class="rank-notice" id="rank-notice" hidden></div>
         <div class="board__summary" id="rank-summary"></div>
 
         <div class="rank-tools">
@@ -128,43 +127,11 @@
       </div>
     </section>
 
-    <!-- ===== SCORES DU ZOO ===== -->
-    <section class="section section--dark section--joined" id="scores">
-      <div class="container">
-        <div class="section__head section__head--row">
-          <div>
-            <p class="eyebrow">04 — Scores</p>
-            <h2 class="section__title">Scores de l'équipe</h2>
-          </div>
-          <div class="board__meta">
-            <span class="board__status" id="board-status">Chargement…</span>
-            <button class="btn btn--small btn--light" id="board-refresh" type="button">↻ Actualiser</button>
-          </div>
-        </div>
-
-        <div class="board__summary" id="board-summary"></div>
-
-        <div class="table-wrap">
-          <table class="board" id="board">
-            <thead>
-              <tr>
-                <th class="col-rank" scope="col">#</th>
-                <th scope="col" data-sort="name">Nom</th>
-                <th class="col-num" scope="col" data-sort="score">Score</th>
-                <th class="col-num" scope="col" data-sort="shame">Nombre de shames</th>
-              </tr>
-            </thead>
-            <tbody id="board-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <!-- ===== GALERIE ===== -->
     <section class="section" id="galerie">
       <div class="container">
         <div class="section__head">
-          <p class="eyebrow">05 — Galerie</p>
+          <p class="eyebrow">04 — Galerie</p>
           <h2 class="section__title">Dans le ZOO</h2>
         </div>
         <div class="gallery" id="gallery"></div>
@@ -175,7 +142,7 @@
     <section class="section section--dark" id="contact">
       <div class="container contact">
         <div class="contact__intro">
-          <p class="eyebrow">06 — Contact</p>
+          <p class="eyebrow">05 — Contact</p>
           <h2 class="section__title">Un message pour le zoo ?</h2>
           <p class="section__lead">Défi, encouragements, provocation amicale d'une autre équipe… on lit tout.</p>
         </div>
@@ -224,6 +191,66 @@
       <figcaption id="lb-caption"></figcaption>
     </figure>
     <button class="lightbox__btn lightbox__next" id="lb-next" aria-label="Suivante">→</button>
+  </div>
+
+  <!-- ===== ANALYSE EN DIRECT ===== -->
+  <button class="live-fab" id="live-fab" type="button" data-live-open aria-label="Ouvrir l'analyse en direct">
+    <span class="live-dot"></span><span class="live-fab__label">Analyse en direct</span>
+    <span class="live-fab__badge" id="live-badge" hidden></span>
+  </button>
+
+  <div class="live" id="live" role="dialog" aria-modal="true" aria-labelledby="live-title" hidden>
+    <div class="live__panel">
+      <header class="live__head">
+        <div>
+          <p class="live__tag"><span class="live-dot"></span>Live · Squadeasy</p>
+          <h2 class="live__title" id="live-title">Analyse en direct</h2>
+        </div>
+        <div class="live__actions">
+          <span class="live__status" id="live-status"></span>
+          <button class="btn btn--small btn--ghost" id="live-replay" type="button">▶ Rejouer</button>
+          <button class="btn btn--small btn--light" id="live-check" type="button">↻ Vérifier</button>
+          <button class="live__close" id="live-close" type="button" aria-label="Fermer l'analyse">✕</button>
+        </div>
+      </header>
+      <div class="live__grid">
+        <section class="live__card live__card--race">
+          <h3 class="live__h">La course · top 10 équipes</h3>
+          <ol class="race" id="live-race"></ol>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Ce que disent les datas</h3>
+          <div class="insights" id="live-insights"></div>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Le ZOO dans le top 50</h3>
+          <ul class="zoo-list" id="live-zoo"></ul>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Fil des événements</h3>
+          <ol class="feed" id="live-feed"></ol>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Effet plein écran joué à chaque actualisation -->
+  <div class="splash" id="splash" hidden>
+    <div class="splash__img"></div>
+    <div class="splash__slices" aria-hidden="true">
+      <i style="--i:0;--dx:-60"></i><i style="--i:1;--dx:90"></i><i style="--i:2;--dx:-35"></i>
+      <i style="--i:3;--dx:120"></i><i style="--i:4;--dx:-80"></i><i style="--i:5;--dx:45"></i>
+    </div>
+    <canvas class="splash__fx" id="splash-fx" aria-hidden="true"></canvas>
+    <div class="splash__scan" aria-hidden="true"></div>
+    <div class="splash__flash" aria-hidden="true"></div>
+    <div class="splash__content" role="status" aria-live="assertive">
+      <span class="splash__kicker" id="splash-kicker"></span>
+      <h2 class="splash__title" id="splash-title"></h2>
+      <p class="splash__text" id="splash-text"></p>
+    </div>
+    <div class="splash__progress" aria-hidden="true"><i></i></div>
+    <span class="splash__skip" id="splash-skip"></span>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>

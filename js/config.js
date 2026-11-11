@@ -31,8 +31,8 @@ const CONFIG = {
   },
 
   /* ---------- Membres (animal totem) ----------
-     "name" doit être écrit EXACTEMENT comme dans ton Google Sheet
-     pour que la photo s'affiche aussi dans le classement.           */
+     Dans le top 50, un joueur du ZOO récupère la photo du membre dont
+     "animal" correspond à son prénom (ou dont "name" = son nom exact).  */
   members: [
     { name: "", animal: "LeGrandZebre", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Z%C3%A8bre_laser_%C3%A0_la_Citadelle_de_Lille_yyyy1z.webp" },
     { name: "", animal: "Anisse", image: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793452241/Chat_noir_au_sourire_malicieux_s7mhf1.webp" },
@@ -49,20 +49,38 @@ const CONFIG = {
   /* ---------- Classement (Google Sheet public) ----------
      1. Dans Google Sheets : Partager > "Tous les utilisateurs disposant du lien" > Lecteur
      2. Copie l'ID dans l'URL : docs.google.com/spreadsheets/d/<ID>/edit
-     3. Ligne 1 du sheet = en-têtes : Nom | Score | Shame
-     Tant que sheetId est vide, des données de démo sont affichées.          */
-  scoreboard: {
+     Onglets lus (noms EXACTS des onglets du sheet) :
+     - teamsSheet   : rang | equipe_id | nom | score_calcule | ... | score_officiel | rang_officiel | membres | maj
+     - playersSheet : rang | joueur_id | nom | equipe | score | maj
+     - allTeamsSheet: toutes les équipes (sert uniquement à les compter)          */
+  ranking: {
     sheetId: "1RisYZycIcMY6wfWXNDUfvoDZXcLnddhgvkBu0HbWVsU",
-    sheetName: "Feuille 1",   // nom de l'onglet (ex. "Feuille 1" ou "Sheet1")
-    refreshMinutes: 5,        // rafraîchissement auto (0 = désactivé)
-    scoreUnit: "pts",
+    teamsSheet: "TOP_10_TEAM",
+    playersSheet: "TOP_50_PLAYERS",
+    allTeamsSheet: "EQUIPES",
+    usTeam: "DigitalZoo",       // texte contenu dans le nom de notre équipe
+    seasonEnd: "2026-11-22T22:00:00.000Z",
+    pageSize: 10,               // lignes par page
   },
 
-  /* ---------- Classement Squadeasy ----------
-     Fichier généré par : node scripts/build-leaderboard.mjs          */
-  ranking: {
-    file: "data/leaderboard.json",
-    pageSize: 10,             // lignes par page
+  /* ---------- Analyse en direct ----------
+     Le sheet est mis à jour toutes les 10 min : le site vérifie toutes les
+     "refreshSeconds" secondes et joue un effet à chaque nouvelle donnée.
+     Change les images de chaque type d'effet ci-dessous.                   */
+  live: {
+    refreshSeconds: 120,
+    effectSeconds: 4.5,         // durée d'un effet plein écran
+    maxEffects: 6,              // effets max joués par actualisation
+    images: {
+      intro: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563674/La_charge_du_zoo_num%C3%A9rique_ljwauy.webp",
+      refresh: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563673/Route_n%C3%A9on_dans_la_for%C3%AAt_orageuse_thjb6g.webp",
+      overtake: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563683/Charge_h%C3%A9ro%C3%AFque_dans_la_for%C3%AAt_en_flammes_kadfm0.webp",
+      zooUp: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793539127/zoo_laser_end_ttr9u1.webp",
+      zooDown: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563678/Chien_tactique_dans_la_for%C3%AAt_en_flammes_evolcs.webp",
+      leader: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563676/Le_lion_tactique_franchit_le_gouffre_en_flammes_vyvqyx.webp",
+      surge: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563682/Tigre_%C3%A9lectrique_dans_l_apocalypse_sauvage_crhuil.webp",
+      player: "https://res.cloudinary.com/de3xvrrq5/image/upload/v1793563679/Ru%C3%A9e_n%C3%A9on_des_pr%C3%A9dateurs_sauvages_yjxu4a.webp",
+    },
   },
 
   /* ---------- Galerie ----------
