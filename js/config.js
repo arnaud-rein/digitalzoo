@@ -54,7 +54,7 @@ const CONFIG = {
      - playersSheet : rang | joueur_id | nom | equipe | score | maj
      - allTeamsSheet: toutes les équipes (sert uniquement à les compter)          */
   ranking: {
-    sheetId: "1RisYZycIcMY6wfWXNDUfvoDZXcLnddhgvkBu0HbWVsU",
+    sheetId: "1XOfpzq1W1u373icPfxfkHmxzntza9ilZsJpnZhyNAKg",   // sheet de secours (ancien : 1RisYZycIcMY6wfWXNDUfvoDZXcLnddhgvkBu0HbWVsU)
     teamsSheet: "TOP_10_TEAM",
     playersSheet: "TOP_50_PLAYERS",
     allTeamsSheet: "EQUIPES",

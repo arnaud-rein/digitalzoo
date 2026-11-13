@@ -213,24 +213,44 @@
           <button class="live__close" id="live-close" type="button" aria-label="Fermer l'analyse">✕</button>
         </div>
       </header>
+      <section class="kpis" id="live-kpis" aria-label="Le ZOO en un coup d'œil"></section>
+
       <div class="live__grid">
         <section class="live__card live__card--race">
           <h3 class="live__h">La course · top 10 équipes</h3>
+          <p class="live__hint">Longueur de la barre = points. <b class="key key--gold">Or</b> le leader, <b class="key key--zoo">violet</b> le ZOO.</p>
           <ol class="race" id="live-race"></ol>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Qui est devant, qui est derrière ?</h3>
+          <p class="live__hint">Points d'écart de chaque équipe par rapport au ZOO. <b class="key key--bad">Rouge</b> : devant nous · <b class="key key--good">vert</b> : derrière nous.</p>
+          <div class="chart" id="live-gap"></div>
+        </section>
+        <section class="live__card live__card--wide">
+          <h3 class="live__h">Évolution des points · le ZOO et ses voisins</h3>
+          <p class="live__hint" id="live-trend-hint">Chaque point = une actualisation du sheet. Survole pour voir le détail.</p>
+          <div class="chart chart--trend" id="live-trend"></div>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Qui porte le ZOO ? · nos animaux du top 50</h3>
+          <p class="live__hint">Barre = part des points du ZOO apportée par chaque animal.</p>
+          <ul class="zoo-list" id="live-zoo"></ul>
+        </section>
+        <section class="live__card">
+          <h3 class="live__h">Les meutes du top 50</h3>
+          <p class="live__hint">Nombre de joueurs de chaque équipe parmi les 50 meilleurs.</p>
+          <div class="chart" id="live-packs"></div>
         </section>
         <section class="live__card">
           <h3 class="live__h">Ce que disent les datas</h3>
           <div class="insights" id="live-insights"></div>
         </section>
         <section class="live__card">
-          <h3 class="live__h">Le ZOO dans le top 50</h3>
-          <ul class="zoo-list" id="live-zoo"></ul>
-        </section>
-        <section class="live__card">
           <h3 class="live__h">Fil des événements</h3>
           <ol class="feed" id="live-feed"></ol>
         </section>
       </div>
+      <div class="chart-tip" id="chart-tip" role="tooltip" hidden></div>
     </div>
   </div>
 

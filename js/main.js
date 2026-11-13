@@ -642,78 +642,334 @@
     return { hours, of: (r) => (old.has(r.id) ? (r.points - old.get(r.id)) / hours : null) };
   }
 
-  function buildInsights(snap, history) {
+  const MEDALS = ["Or", "Argent", "Bronze"];
+  const hoursLeftAt = (time) => {
+    const end = Date.parse(CONFIG.ranking.seasonEnd);
+    return Number.isFinite(end) ? Math.max(0, (end - time) / 3.6e6) : Infinity;
+  };
+
+  // Évolution d'un écart depuis l'actualisation précédente : "l'écart se réduit / augmente"
+  function gapTrend(now, before, shrinkIsGood, since) {
+    if (before == null || now === before) return null;
+    const d = now - before;
+    const good = shrinkIsGood ? d < 0 : d > 0;
+    return { status: good ? "good" : "bad", text: `${d < 0 ? "▼ se réduit" : "▲ augmente"} de ${fmtNum(Math.abs(d))} pts depuis ${fmtTime(since)}` };
+  }
+
+  /* KPI : la situation du ZOO, chacun avec une phrase simple et un statut coloré */
+  function buildKpis(snap, prev, history) {
+    const { teams, players } = snap;
+    if (!teams.length) return [];
+    const us = teams.find((t) => t.isUs);
+    const total = ranking.teamsTotal || 0;
+    const out = [];
+
+    if (!us) {
+      const last = teams[teams.length - 1];
+      out.push({ icon: "🏁", label: "Classement du ZOO", value: "Hors top 10", status: "bad", chip: "À aller chercher", text: `Le 10e, ${last.name}, a ${fmtNum(last.points)} pts` });
+    } else {
+      const pct = total ? Math.max(1, Math.ceil((us.rank / total) * 100)) : null;
+      out.push({
+        icon: us.rank <= 3 ? ["🥇", "🥈", "🥉"][us.rank - 1] : "🏁",
+        label: "Classement du ZOO",
+        value: `${us.rank}${us.rank === 1 ? "er" : "e"}`,
+        unit: total ? `/ ${fmtNum(total)}` : "",
+        status: us.rank === 1 ? "gold" : us.rank <= 3 ? "good" : "neutral",
+        chip: us.rank <= 3 ? `Podium · ${MEDALS[us.rank - 1]}` : "Top 10",
+        text: pct ? `Le ZOO fait partie du top ${pct} % des équipes` : "Classement officiel Squadeasy",
+        hero: true,
+      });
+
+      const prevTeams = new Map((prev?.teams || []).map((t) => [t.id, t]));
+      const pts = (t, list) => list.get(t.id)?.points;
+      const usBefore = prevTeams.get(us.id);
+
+      if (us.rank > 1) {
+        const leader = teams[0];
+        const gap = leader.points - us.points;
+        const before = usBefore && prevTeams.has(leader.id) ? pts(leader, prevTeams) - usBefore.points : null;
+        const trend = gapTrend(gap, before, true, prev?.time);
+        out.push({ icon: "🎯", label: "Retard sur le 1er", value: fmtNum(gap), unit: "pts", status: trend?.status || "neutral", chip: trend?.text, text: `C'est ce qu'il manque pour rattraper ${leader.name}` });
+      }
+      const chaser = teams[us.rank]; // l'équipe juste derrière
+      if (chaser) {
+        const gap = us.points - chaser.points;
+        const before = usBefore && prevTeams.has(chaser.id) ? usBefore.points - pts(chaser, prevTeams) : null;
+        const trend = gapTrend(gap, before, false, prev?.time);
+        out.push({ icon: "🛡️", label: `Avance sur le ${us.rank + 1}e`, value: fmtNum(gap), unit: "pts", status: trend?.status || "neutral", chip: trend?.text, text: `${chaser.name} est juste derrière nous` });
+      }
+
+      // Rythme (points par heure) et projection
+      const pace = paceMap(snap, history, "teams");
+      const usPace = pace?.of(us);
+      const rival = us.rank === 1 ? teams[1] : teams[us.rank - 2];
+      const rivalPace = rival && pace?.of(rival);
+      if (usPace != null && rivalPace != null) {
+        const faster = usPace >= rivalPace;
+        out.push({
+          icon: "⚡", label: `Rythme (sur ${fmtDuration(pace.hours)})`, value: `+${fmtNum(usPace)}`, unit: "pts/h",
+          status: faster ? "good" : "bad",
+          chip: faster ? `Plus rapide que ${rival.name}` : `Plus lent que ${rival.name}`,
+          text: `${rival.name} avance à +${fmtNum(rivalPace)} pts/h`,
+        });
+      } else {
+        out.push({ icon: "⚡", label: "Rythme", value: "…", unit: "pts/h", status: "neutral", chip: "Bientôt", text: "Calculé dès la prochaine actualisation (garde la page ouverte)" });
+      }
+
+      const hoursLeft = hoursLeftAt(snap.time);
+      if (rival && Number.isFinite(hoursLeft) && hoursLeft > 0) {
+        const gap = Math.abs(rival.points - us.points);
+        const need = gap / hoursLeft; // pts/h à prendre en plus que le rival
+        const rel = usPace != null && rivalPace != null ? usPace - rivalPace : null;
+        if (us.rank === 1) {
+          const safe = rel == null ? null : rel >= 0 || gap / -rel > hoursLeft;
+          out.push({
+            icon: "👑", label: "Rester 1er jusqu'au bout", value: fmtNum(need), unit: "pts/h",
+            status: safe == null ? "neutral" : safe ? "good" : "bad",
+            chip: safe == null ? "" : safe ? "À ce rythme, on gagne" : `Rattrapés dans ~${fmtDuration(gap / -rel)}`,
+            text: `${rival.name} doit prendre ${fmtNum(need)} pts/h de plus que nous pour passer devant`,
+          });
+        } else {
+          const ok = rel == null ? null : rel > need;
+          out.push({
+            icon: "🚀", label: `Objectif : passer ${us.rank - 1 === 1 ? "1er" : `${us.rank - 1}e`}`, value: `+${fmtNum(need)}`, unit: "pts/h",
+            status: ok == null ? "neutral" : ok ? "good" : "warn",
+            chip: ok == null ? "" : ok ? `Devant dans ~${fmtDuration(gap / rel)}` : "Il faut accélérer",
+            text: `À prendre chaque heure en plus de ${rival.name} jusqu'à la fin`,
+          });
+        }
+      }
+    }
+
+    const zoo = players.filter((p) => p.isUs);
+    if (players.length) {
+      out.push({
+        icon: "🐾", label: "Animaux dans le top 50", value: String(zoo.length), unit: `/ ${CONFIG.members.length}`,
+        status: zoo.length >= CONFIG.members.length / 2 ? "good" : "neutral",
+        chip: zoo[0] ? `Meilleur : ${zoo[0].name} (${zoo[0].rank}e)` : "",
+        text: "Joueurs du ZOO parmi les 50 meilleurs individuels",
+        dots: { on: zoo.length, of: CONFIG.members.length },
+      });
+    }
+
+    const hoursLeft = hoursLeftAt(snap.time);
+    if (Number.isFinite(hoursLeft) && hoursLeft > 0) {
+      const end = Date.parse(CONFIG.ranking.seasonEnd);
+      out.push({
+        icon: "⏳", label: "Temps restant", value: hoursLeft < 48 ? fmtNum(hoursLeft) : String(Math.floor(hoursLeft / 24)), unit: hoursLeft < 48 ? "h" : "jours",
+        status: hoursLeft < 24 ? "warn" : "neutral", chip: hoursLeft < 24 ? "Dernière ligne droite" : "",
+        text: `Fin le ${new Date(end).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" })} à ${fmtTime(end)}`,
+      });
+    }
+    return out;
+  }
+
+  /* Insights : ce qui se passe dans le reste du classement */
+  function buildInsights(snap, prev, history) {
     const out = [];
     const { teams, players } = snap;
     if (!teams.length) return out;
-    const us = teams.find((t) => t.isUs);
-    const leader = teams[0];
 
-    if (us) {
-      out.push(us.rank === 1
-        ? { label: "Position du ZOO", value: "#1", text: `En tête avec ${fmtNum(us.points - (teams[1]?.points ?? us.points))} pts d'avance sur ${teams[1]?.name ?? "—"}`, tone: "up" }
-        : { label: "Position du ZOO", value: `#${us.rank}`, text: `À ${fmtNum(leader.points - us.points)} pts de ${leader.name}`, tone: us.rank <= 3 ? "up" : "" });
-    } else {
-      out.push({ label: "Position du ZOO", value: "Hors top 10", text: `${teams[teams.length - 1].name} ferme la marche à ${fmtNum(teams[teams.length - 1].points)} pts` });
-    }
-
-    // Duel le plus serré
     let duel = null;
     for (let i = 1; i < teams.length; i++) {
       const gap = teams[i - 1].points - teams[i].points;
       if (!duel || gap < duel.gap) duel = { gap, a: teams[i - 1], b: teams[i] };
     }
-    if (duel) out.push({ label: "Duel du moment", value: `${fmtNum(duel.gap)} pts`, text: `${duel.a.name} (#${duel.a.rank}) vs ${duel.b.name} (#${duel.b.rank})`, tone: duel.a.isUs || duel.b.isUs ? "hot" : "" });
+    if (duel) out.push({ icon: "⚔️", label: "Duel le plus serré", value: `${fmtNum(duel.gap)} pts`, text: `${duel.a.name} (${duel.a.rank}e) vs ${duel.b.name} (${duel.b.rank}e)`, tone: duel.a.isUs || duel.b.isUs ? "hot" : "" });
 
-    // Dynamique & projection
     const pace = paceMap(snap, history, "teams");
-    if (pace) {
-      const paced = teams.map((t) => ({ t, v: pace.of(t) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
-      if (paced[0]) out.push({ label: `Dynamique (${fmtDuration(pace.hours)})`, value: `+${fmtNum(paced[0].v)} pts/h`, text: `${paced[0].t.name} est l'équipe la plus rapide`, tone: paced[0].t.isUs ? "up" : "" });
+    const paced = pace ? teams.map((t) => ({ t, v: pace.of(t) })).filter((x) => x.v != null).sort((a, b) => b.v - a.v) : [];
+    if (paced[0]) out.push({ icon: "🔥", label: "Équipe la plus rapide", value: `+${fmtNum(paced[0].v)} pts/h`, text: `${paced[0].t.name} (sur ${fmtDuration(pace.hours)})`, tone: paced[0].t.isUs ? "up" : "" });
 
-      const usPace = us && pace.of(us);
-      const rival = us && (us.rank === 1 ? teams[1] : teams[us.rank - 2]);
-      const rivalPace = rival && pace.of(rival);
-      if (usPace != null && rivalPace != null) {
-        const end = Date.parse(CONFIG.ranking.seasonEnd);
-        const hoursLeft = Number.isFinite(end) ? (end - snap.time) / 3.6e6 : Infinity;
-        const gap = Math.abs(rival.points - us.points);
-        const rel = us.rank === 1 ? rivalPace - usPace : usPace - rivalPace;
-        let text;
-        if (us.rank === 1) {
-          text = rel > 0
-            ? `${rival.name} revient de ${fmtNum(rel)} pts/h : menace dans ~${fmtDuration(gap / rel)}`
-            : `Le ZOO creuse l'écart de ${fmtNum(-rel)} pts/h sur ${rival.name}`;
-        } else if (rel > 0) {
-          const h = gap / rel;
-          text = h < hoursLeft
-            ? `À ce rythme, le ZOO passe ${rival.name} dans ~${fmtDuration(h)}`
-            : `Le ZOO revient de ${fmtNum(rel)} pts/h sur ${rival.name}, mais pas assez avant la fin`;
-        } else {
-          text = `${rival.name} creuse l'écart de ${fmtNum(-rel)} pts/h : il faut accélérer !`;
-        }
-        out.push({ label: "Projection", value: `${fmtSigned(Math.round(us.rank === 1 ? -rel : rel))} pts/h`, text, tone: (us.rank === 1 ? rel <= 0 : rel > 0) ? "up" : "down" });
-      }
-    } else {
-      out.push({ label: "Dynamique", value: "…", text: "Encore une actualisation et on calcule le rythme de chaque équipe" });
-    }
+    const before = new Map((prev?.teams || []).map((t) => [t.id, t.points]));
+    const gains = teams.filter((t) => before.has(t.id)).map((t) => ({ t, gain: t.points - before.get(t.id) })).sort((a, b) => b.gain - a.gain);
+    if (gains[0]?.gain > 0) out.push({ icon: "📈", label: `Meilleure progression depuis ${fmtTime(prev.time)}`, value: `${fmtSigned(gains[0].gain)} pts`, text: gains[0].t.name, tone: gains[0].t.isUs ? "up" : "" });
 
-    // Joueurs
-    const zoo = players.filter((p) => p.isUs);
-    if (players.length) {
-      out.push({ label: "Le ZOO dans le top 50", value: `${zoo.length} / ${CONFIG.members.length}`, text: zoo[0] ? `Meilleur : ${zoo[0].name} #${zoo[0].rank}` : "Aucun animal dans le top 50", tone: zoo.length >= 5 ? "up" : "" });
-      const count = new Map();
-      players.forEach((p) => count.set(p.team, (count.get(p.team) || 0) + 1));
-      const [bestTeam, n] = [...count.entries()].sort((a, b) => b[1] - a[1])[0];
-      out.push({ label: "Meute la plus dense", value: plural(n, "joueur"), text: `${bestTeam} dans le top 50`, tone: isUsTeam(bestTeam) ? "up" : "" });
-    }
-
-    const end = Date.parse(CONFIG.ranking.seasonEnd);
-    if (Number.isFinite(end) && end > snap.time) {
-      const days = Math.ceil((end - snap.time) / 864e5);
-      out.push({ label: "Fin du défi", value: `J-${days}`, text: new Date(end).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" }) });
-    }
+    if (players[0]) out.push({ icon: "🏃", label: "N°1 individuel", value: `${fmtNum(players[0].points)} pts`, text: `${players[0].name} · ${players[0].team}`, tone: players[0].isUs ? "up" : "" });
     return out;
+  }
+
+  /* ---------- Graphiques (SVG / HTML, sans librairie) ---------- */
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const svg = (tag, attrs = {}, children = []) => {
+    const node = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs)) {
+      if (key === "text") node.textContent = value;
+      else node.setAttribute(key, value);
+    }
+    for (const child of [].concat(children)) if (child) node.append(child);
+    return node;
+  };
+
+  // Infobulle partagée : tout élément avec data-tip ("ligne 1\nligne 2")
+  const tip = {
+    show(text, x, y) {
+      const node = $("#chart-tip");
+      node.replaceChildren(...String(text).split("\n").map((line, i) => el(i ? "span" : "strong", { text: line })));
+      node.hidden = false;
+      const { width, height } = node.getBoundingClientRect();
+      const left = Math.min(window.innerWidth - width - 8, Math.max(8, x + 14));
+      const top = y - height - 12 < 8 ? y + 18 : y - height - 12;
+      node.style.transform = `translate(${left}px, ${top}px)`;
+    },
+    hide() { $("#chart-tip").hidden = true; },
+    init() {
+      const root = $("#live");
+      root.addEventListener("pointermove", (e) => {
+        const target = e.target.closest?.("[data-tip]");
+        if (target && !target.closest(".chart--trend")) this.show(target.dataset.tip, e.clientX, e.clientY);
+        else if (!e.target.closest?.(".chart--trend")) this.hide();
+      });
+      root.addEventListener("pointerleave", () => this.hide());
+      root.addEventListener("scroll", () => this.hide(), { passive: true });
+    },
+  };
+
+  const chartEmpty = (node, text) => node.replaceChildren(el("p", { class: "chart__empty", text }));
+
+  // Barres divergentes : écart de chaque équipe du top 10 avec le ZOO
+  function renderGapChart(snap) {
+    const node = $("#live-gap");
+    const us = snap.teams.find((t) => t.isUs);
+    if (!us) return chartEmpty(node, "Le ZOO n'est pas dans le top 10 : pas d'écart à afficher.");
+    const rows = snap.teams.map((t) => ({ t, d: t.points - us.points }));
+    const ahead = Math.max(0, ...rows.map((r) => r.d));
+    const behind = Math.max(0, ...rows.map((r) => -r.d));
+    const span = ahead + behind || 1;
+    const zero = (behind / span) * 100; // position du ZOO sur l'axe, en %
+
+    node.replaceChildren(el("div", { class: "gap" }, [
+      el("div", { class: "gap__legend" }, [
+        el("span", { text: "◀ derrière nous" }),
+        el("span", { text: "devant nous ▶" }),
+      ]),
+      ...rows.map(({ t, d }) => {
+        const w = (Math.abs(d) / span) * 100;
+        const bar = el("i", { class: `gap__bar gap__bar--${d > 0 ? "ahead" : d < 0 ? "behind" : "us"}` });
+        bar.style.left = d >= 0 ? `${zero}%` : `${zero - w}%`;
+        bar.style.width = d ? `${w}%` : "0";
+        const value = el("span", { class: "gap__value", text: d ? fmtSigned(d) : "ZOO" });
+        if (d >= 0) value.style.left = `calc(${zero + w}% + 6px)`;
+        else value.style.right = `calc(${100 - zero + w}% + 6px)`;
+        return el("div", {
+          class: `gap__row${t.isUs ? " is-us" : ""}`,
+          "data-tip": t.isUs ? `${t.name}\n${fmtNum(t.points)} pts · ${t.rank}e` : `${t.name} · ${t.rank}e\n${fmtNum(t.points)} pts\n${d > 0 ? `${fmtNum(d)} pts devant le ZOO` : `${fmtNum(-d)} pts derrière le ZOO`}`,
+        }, [
+          el("span", { class: "gap__name", text: t.name }),
+          el("div", { class: "gap__track", style: `--zero:${zero}%` }, [bar, value]),
+        ]);
+      }),
+    ]));
+  }
+
+  // Barres horizontales : nombre de joueurs de chaque équipe dans le top 50
+  function renderPacksChart(snap) {
+    const node = $("#live-packs");
+    if (!snap.players.length) return chartEmpty(node, "Pas encore de données joueurs.");
+    const count = new Map();
+    snap.players.forEach((p) => count.set(p.team, (count.get(p.team) || 0) + 1));
+    let rows = [...count.entries()].map(([team, n]) => ({ team, n, isUs: isUsTeam(team) })).sort((a, b) => b.n - a.n);
+    const keep = rows.slice(0, 7);
+    if (!keep.some((r) => r.isUs)) { const us = rows.find((r) => r.isUs); if (us) keep[keep.length - 1] = us; }
+    const others = rows.filter((r) => !keep.includes(r)).reduce((s, r) => s + r.n, 0);
+    rows = others ? [...keep, { team: `Autres (${count.size - keep.length} équipes)`, n: others, isOther: true }] : keep;
+    const max = Math.max(...rows.map((r) => r.n));
+
+    node.replaceChildren(el("div", { class: "hbars" }, rows.map((r) => {
+      const bar = el("i", { class: `hbars__bar${r.isUs ? " is-us" : r.isOther ? " is-other" : ""}` });
+      bar.style.width = `${(r.n / max) * 100}%`;
+      return el("div", { class: `hbars__row${r.isUs ? " is-us" : ""}`, "data-tip": `${r.team}\n${plural(r.n, "joueur")} dans le top 50` }, [
+        el("span", { class: "hbars__name", text: r.team }),
+        el("div", { class: "hbars__track" }, [bar, el("span", { class: "hbars__value", text: String(r.n) })]),
+      ]);
+    })));
+  }
+
+  const niceStep = (range, count) => {
+    const raw = range / count;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    return [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) || mag * 10;
+  };
+
+  // Courbes : points du ZOO et des équipes juste devant / juste derrière au fil des actualisations
+  function renderTrendChart(snap, history) {
+    const node = $("#live-trend");
+    const us = snap.teams.find((t) => t.isUs);
+    if (!us) return chartEmpty(node, "Le ZOO n'est pas dans le top 10 : pas de courbe à afficher.");
+    const series = [
+      { id: us.id, name: "DigitalZoo", cls: "zoo" },
+      snap.teams[us.rank - 2] && { id: snap.teams[us.rank - 2].id, name: snap.teams[us.rank - 2].name, cls: "ahead", tag: "devant" },
+      snap.teams[us.rank] && { id: snap.teams[us.rank].id, name: snap.teams[us.rank].name, cls: "behind", tag: "derrière" },
+    ].filter(Boolean);
+
+    const snaps = history.filter((s) => s.time <= snap.time).slice(-48);
+    if (snaps.length < 2) {
+      return chartEmpty(node, "La courbe se dessine au fil des actualisations (toutes les 10 min). Garde la page ouverte ou reviens plus tard : l'historique est gardé dans ton navigateur.");
+    }
+    series.forEach((s) => { s.points = snaps.map((h) => ({ time: h.time, v: h.teams.find((t) => t.id === s.id)?.points })).filter((p) => p.v != null); });
+
+    const W = Math.max(300, node.clientWidth || 600);
+    const H = 260;
+    const pad = { t: 16, r: 16, b: 28, l: 52 };
+    const all = series.flatMap((s) => s.points.map((p) => p.v));
+    const t0 = snaps[0].time;
+    const t1 = snaps[snaps.length - 1].time || t0 + 1;
+    const step = niceStep(Math.max(1, Math.max(...all) - Math.min(...all)), 4);
+    const yMin = Math.floor(Math.min(...all) / step) * step;
+    const yMax = Math.ceil(Math.max(...all) / step) * step || yMin + step;
+    const x = (t) => pad.l + ((t - t0) / Math.max(1, t1 - t0)) * (W - pad.l - pad.r);
+    const y = (v) => pad.t + (1 - (v - yMin) / Math.max(1, yMax - yMin)) * (H - pad.t - pad.b);
+
+    const grid = [];
+    for (let v = yMin; v <= yMax + 0.5; v += step) {
+      grid.push(svg("line", { class: "trend__grid", x1: pad.l, x2: W - pad.r, y1: y(v), y2: y(v) }));
+      grid.push(svg("text", { class: "trend__tick", x: pad.l - 8, y: y(v) + 4, "text-anchor": "end", text: fmtNum(v) }));
+    }
+    const multiDay = t1 - t0 > 20 * 3.6e6;
+    const ticks = Math.min(snaps.length, Math.max(2, Math.floor((W - pad.l - pad.r) / 90)));
+    for (let i = 0; i < ticks; i++) {
+      const t = t0 + ((t1 - t0) * i) / (ticks - 1);
+      const label = multiDay ? new Date(t).toLocaleString("fr-FR", { timeZone: "Europe/Paris", weekday: "short", hour: "2-digit", minute: "2-digit" }) : fmtTime(t);
+      grid.push(svg("text", { class: "trend__tick", x: x(t), y: H - 8, "text-anchor": i === 0 ? "start" : i === ticks - 1 ? "end" : "middle", text: label }));
+    }
+
+    const lines = series.map((s) => svg("g", { class: `trend__series trend__series--${s.cls}` }, [
+      svg("path", { class: "trend__area", d: `M${x(s.points[0].time)},${H - pad.b} ${s.points.map((p) => `L${x(p.time)},${y(p.v)}`).join(" ")} L${x(s.points[s.points.length - 1].time)},${H - pad.b}Z` }),
+      svg("path", { class: "trend__line", d: s.points.map((p, i) => `${i ? "L" : "M"}${x(p.time)},${y(p.v)}`).join(" ") }),
+      svg("circle", { class: "trend__dot", r: 4.5, cx: x(s.points[s.points.length - 1].time), cy: y(s.points[s.points.length - 1].v) }),
+    ]));
+
+    const cross = svg("line", { class: "trend__cross", y1: pad.t, y2: H - pad.b, x1: 0, x2: 0, visibility: "hidden" });
+    const hits = svg("rect", { class: "trend__hit", x: pad.l, y: pad.t, width: W - pad.l - pad.r, height: H - pad.t - pad.b });
+    const chart = svg("svg", { class: "trend", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": "Évolution des points du ZOO et de ses voisins" }, [...grid, ...lines, cross, hits]);
+
+    const onMove = (e) => {
+      const box = chart.getBoundingClientRect();
+      const px = ((e.clientX - box.left) / box.width) * W;
+      const snapAt = snaps.reduce((best, s) => (Math.abs(x(s.time) - px) < Math.abs(x(best.time) - px) ? s : best), snaps[0]);
+      cross.setAttribute("x1", x(snapAt.time));
+      cross.setAttribute("x2", x(snapAt.time));
+      cross.setAttribute("visibility", "visible");
+      const lines = series.map((s) => {
+        const t = snapAt.teams.find((o) => o.id === s.id);
+        return t ? `${s.name} : ${fmtNum(t.points)} pts (${t.rank}e)` : null;
+      }).filter(Boolean);
+      const label = new Date(snapAt.time).toLocaleString("fr-FR", { timeZone: "Europe/Paris", weekday: "long", hour: "2-digit", minute: "2-digit" });
+      tip.show([label, ...lines].join("\n"), e.clientX, e.clientY);
+    };
+    hits.addEventListener("pointermove", onMove);
+    hits.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); tip.hide(); });
+
+    const legend = el("div", { class: "legend" }, series.map((s) => {
+      const last = s.points[s.points.length - 1];
+      return el("span", { class: `legend__item legend__item--${s.cls}` }, [
+        el("i", { class: "legend__key" }),
+        el("span", { text: `${s.name}${s.tag ? ` (${s.tag})` : ""}` }),
+        el("strong", { text: `${fmtNum(last.v)} pts` }),
+      ]);
+    }));
+    node.replaceChildren(legend, chart);
+    $("#live-trend-hint").textContent = `${plural(snaps.length, "actualisation")} depuis ${new Date(t0).toLocaleString("fr-FR", { timeZone: "Europe/Paris", weekday: "long", hour: "2-digit", minute: "2-digit" })}. Survole la courbe pour le détail.`;
   }
 
   /* ---------- Popup "Analyse en direct" ---------- */
@@ -783,6 +1039,7 @@
       if (!this.isOpen) return;
       this.isOpen = false;
       splash.stop();
+      tip.hide();
       $("#live").hidden = true;
       document.body.classList.remove("no-scroll", "live-on");
       if (this.lastFocus) this.lastFocus.focus();
@@ -802,8 +1059,12 @@
       const prev = snapOverride ? null : ranking.prev;
       renderRace(snap, prev, animate);
       renderZoo(snap, prev);
+      renderGapChart(snap);
+      renderPacksChart(snap);
       if (!snapOverride) {
-        renderInsights(buildInsights(snap, ranking.history));
+        renderKpis(buildKpis(snap, ranking.prev, ranking.history));
+        renderTrendChart(snap, ranking.history);
+        renderInsights(buildInsights(snap, ranking.prev, ranking.history));
         renderFeed(this.feed);
       }
       this.tick();
@@ -936,28 +1197,51 @@
   function renderZoo(snap, prev) {
     const list = $("#live-zoo");
     const zoo = snap.players.filter((p) => p.isUs);
+    const team = snap.teams.find((t) => t.isUs);
+    const total = team?.points || zoo.reduce((s, p) => s + p.points, 0) || 1;
+    const max = Math.max(1, ...zoo.map((p) => p.points));
     const prevById = new Map((prev?.players || []).map((p) => [p.id, p]));
     list.replaceChildren(...(zoo.length ? zoo.map((p) => {
       const member = memberFor(p.name);
       const old = prevById.get(p.id);
       const move = old ? old.rank - p.rank : 0;
-      return el("li", { class: "zoo-list__item" }, [
+      const share = (p.points / total) * 100;
+      const bar = el("i", { class: "zoo-list__bar" });
+      bar.style.width = `${(p.points / max) * 100}%`;
+      return el("li", { class: "zoo-list__item", "data-tip": `${p.name}${member ? ` · ${member.animal}` : ""}\n${p.rank}e du classement individuel\n${fmtNum(p.points)} pts = ${share.toFixed(1).replace(".", ",")} % des points du ZOO` }, [
         el("span", { class: "zoo-list__rank", text: `#${p.rank}` }),
         avatarFor(p.name, member),
         el("div", { class: "zoo-list__who" }, [
           el("span", { class: "player__name", text: p.name }),
-          member ? el("span", { class: "player__animal", text: member.animal }) : null,
+          el("div", { class: "zoo-list__track" }, bar),
         ]),
-        el("span", { class: "zoo-list__pts", text: fmtNum(p.points) }),
-        move ? el("span", { class: `move move--${move > 0 ? "up" : "down"}`, text: String(Math.abs(move)) }) : null,
+        el("span", { class: "zoo-list__pts" }, [fmtNum(p.points), el("small", { text: `${Math.round(share)} %` })]),
+        move ? el("span", { class: `move move--${move > 0 ? "up" : "down"}`, text: String(Math.abs(move)) }) : el("span"),
       ]);
     }) : [el("li", { class: "board__empty", text: "Aucun animal dans le top 50 pour l'instant." })]));
+  }
+
+  function renderKpis(kpis) {
+    $("#live-kpis").replaceChildren(...kpis.map((k, i) => {
+      const node = el("article", { class: `kpi kpi--${k.status || "neutral"}${k.hero ? " kpi--hero" : ""}` }, [
+        el("div", { class: "kpi__top" }, [
+          el("span", { class: "kpi__icon", "aria-hidden": "true", text: k.icon }),
+          el("span", { class: "kpi__label", text: k.label }),
+        ]),
+        el("div", { class: "kpi__value" }, [k.value, k.unit ? el("small", { text: ` ${k.unit}` }) : null]),
+        k.dots ? el("div", { class: "kpi__dots", "aria-hidden": "true" }, Array.from({ length: k.dots.of }, (_, j) => el("i", { class: j < k.dots.on ? "is-on" : "" }))) : null,
+        k.chip ? el("span", { class: "kpi__chip", text: k.chip }) : null,
+        el("p", { class: "kpi__text", text: k.text }),
+      ]);
+      node.style.animationDelay = `${i * 60}ms`;
+      return node;
+    }));
   }
 
   function renderInsights(insights) {
     $("#live-insights").replaceChildren(...insights.map((ins, i) => {
       const node = el("article", { class: `insight${ins.tone ? ` insight--${ins.tone}` : ""}` }, [
-        el("span", { class: "insight__label", text: ins.label }),
+        el("span", { class: "insight__label" }, [ins.icon ? el("span", { class: "insight__icon", "aria-hidden": "true", text: ins.icon }) : null, ins.label]),
         el("span", { class: "insight__value", text: ins.value }),
         el("p", { class: "insight__text", text: ins.text }),
       ]);
@@ -1101,6 +1385,14 @@
     $("#live-replay").addEventListener("click", () => live.replay());
     $("#live-check").addEventListener("click", () => { live.tick(); loadRanking(); });
     $("#splash").addEventListener("click", () => splash.next());
+    tip.init();
+
+    // La courbe est dessinée à la largeur de sa carte : on la redessine au redimensionnement
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (live.isOpen && ranking.snap) renderTrendChart(ranking.snap, ranking.history); }, 150);
+    });
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       if (!$("#splash").hidden) splash.finish();
